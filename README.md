@@ -45,7 +45,7 @@ Generate ONet Train data and annotation file
 
     python dface/prepare_data/gen_Onet_train_data.py --prefix_path {annotation file image prefix path, just your local wider face images folder} --dface_traindata_store {dface train data temporary folder you made before } --anno_file ｛wider face original combined  annotation file, default anno_store/wider_origin_anno.txt} --pmodel_file {your PNet model file trained before} --rmodel_file {your RNet model file trained before}
 
-Generate ONet Train landmarks data
+Generate ONet Train landmarks data (as MTCNN landmatk is a subtask,so landmark detection is not so good. you also can close it' loss in code) Meaning we can skip this step.
 
     python dface/prepare_data/gen_landmark_48.py
 
