@@ -57,8 +57,10 @@ python dface/prepare_data/assemble_onet_imglist.py
 
 python dface/train_net/train_o_net.py
 
+    Note: a suitable learning rate and batch size is very important 
+
 ## Test Face Detection
 
-If you don't want to train,i have put onet_epoch.pt,pnet_epoch.pt,rnet_epoch.pt in model_store folder.You just try test_image.py
+    If you don't want to train,i have put onet_epoch.pt,pnet_epoch.pt,rnet_epoch.pt in model_store folder.You just try test_image.py
 
 python test_image.py
