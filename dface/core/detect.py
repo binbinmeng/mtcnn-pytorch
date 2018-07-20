@@ -31,6 +31,7 @@ def create_mtcnn_net(p_model_path=None, r_model_path=None, o_model_path=None, us
     if r_model_path is not None:
         rnet = RNet(use_cuda=use_cuda)
         if (use_cuda):
+            rnet = torch.nn.DataParallel(rnet,device_ids=[0])
             rnet.load_state_dict(torch.load(r_model_path))
             #rnet.cuda()
             rnet=rnet.cuda()
@@ -42,6 +43,7 @@ def create_mtcnn_net(p_model_path=None, r_model_path=None, o_model_path=None, us
     if o_model_path is not None:
         onet = ONet(use_cuda=use_cuda)
         if (use_cuda):
+            onet = torch.nn.DataParallel(onet,device_ids=[0])
             onet.load_state_dict(torch.load(o_model_path))
             onet.cuda()
             onet=rnet.cuda()
@@ -396,19 +398,22 @@ face candidates:%d, current batch_size:%d"%(num_boxes, batch_size)
 
         # cropped_ims_tensors = np.zeros((num_boxes, 3, 24, 24), dtype=np.float32)
         cropped_ims_tensors = []
+        print(num_boxes)
         for i in range(num_boxes):
-            tmp = np.zeros((tmph[i], tmpw[i], 3), dtype=np.uint8)
-            tmp[dy[i]:edy[i]+1, dx[i]:edx[i]+1, :] = im[y[i]:ey[i]+1, x[i]:ex[i]+1, :]
-            crop_im = cv2.resize(tmp, (24, 24))
-            crop_im_tensor = image_tools.convert_image_to_tensor(crop_im)
-            # cropped_ims_tensors[i, :, :, :] = crop_im_tensor
-            cropped_ims_tensors.append(crop_im_tensor)
+            if(edx[i]>0) and (edy[i]>0) and (ey[i]>0)  and (ex[i]>0) and (tmph[i] > 0) and (tmpw[i] > 0):# ignore nagitive value
+               tmp = np.zeros((tmph[i], tmpw[i], 3), dtype=np.uint8)
+               print(dy[i],edy[i]+1, dx[i],edx[i]+1)
+               tmp[dy[i]:edy[i]+1, dx[i]:edx[i]+1, :] = im[y[i]:ey[i]+1, x[i]:ex[i]+1, :]
+               crop_im = cv2.resize(tmp, (24, 24))
+               crop_im_tensor = image_tools.convert_image_to_tensor(crop_im)
+               # cropped_ims_tensors[i, :, :, :] = crop_im_tensor
+               cropped_ims_tensors.append(crop_im_tensor)
         feed_imgs = Variable(torch.stack(cropped_ims_tensors))
 
         #if self.rnet_detector.use_cuda: #no use_cuda 
         feed_imgs = feed_imgs.cuda()
 
-        cls_map, reg = self.rnet_detector(feed_imgs)
+        cls_map, reg = self.rnet_detector(feed_imgs.float())#solve python3 error
 
         cls_map = cls_map.cpu().data.numpy()
         reg = reg.cpu().data.numpy()

@@ -150,7 +150,7 @@ def train_rnet(model_store_path, end_epoch,imdb,
             im_tensor = [ image_tools.convert_image_to_tensor(image[i,:,:,:]) for i in range(image.shape[0]) ]
             im_tensor = torch.stack(im_tensor)
 
-            im_tensor = Variable(im_tensor)
+            im_tensor = Variable(im_tensor).float()
             gt_label = Variable(torch.from_numpy(gt_label).float())
 
             gt_bbox = Variable(torch.from_numpy(gt_bbox).float())
