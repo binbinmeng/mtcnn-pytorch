@@ -145,13 +145,17 @@ class RNet(nn.Module):
 
     def forward(self, x):
         # backend
+        print("RNet input ...")
+        print(x.size())
         x = self.pre_layer(x)
         x = x.view(x.size(0), -1)
+        print(x.size()) 
         x = self.conv4(x)
         x = self.prelu4(x)
         # detection
         det = torch.sigmoid(self.conv5_1(x))
         box = self.conv5_2(x)
+        print("Done !")
         # landmark = self.conv5_3(x)
 
         if self.is_train is True:
@@ -163,7 +167,7 @@ class RNet(nn.Module):
 
 
 class ONet(nn.Module):
-    ''' RNet '''
+    '''ONet '''
 
     def __init__(self,is_train=False, use_cuda=True):
         super(ONet, self).__init__()
@@ -199,6 +203,7 @@ class ONet(nn.Module):
     def forward(self, x):
         # backend
         x = self.pre_layer(x)
+        print(x.size())
         x = x.view(x.size(0), -1)
         x = self.conv5(x)
         x = self.prelu5(x)

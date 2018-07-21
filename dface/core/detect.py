@@ -46,7 +46,7 @@ def create_mtcnn_net(p_model_path=None, r_model_path=None, o_model_path=None, us
             onet = torch.nn.DataParallel(onet,device_ids=[0])
             onet.load_state_dict(torch.load(o_model_path))
             onet.cuda()
-            onet=rnet.cuda()
+            onet=onet.cuda()
             cudnn.benchmark=True
         else:
             onet.load_state_dict(torch.load(o_model_path, map_location=lambda storage, loc: storage))
@@ -522,18 +522,19 @@ face candidates:%d, current batch_size:%d"%(num_boxes, batch_size)
         # cropped_ims_tensors = np.zeros((num_boxes, 3, 24, 24), dtype=np.float32)
         cropped_ims_tensors = []
         for i in range(num_boxes):
-            tmp = np.zeros((tmph[i], tmpw[i], 3), dtype=np.uint8)
-            tmp[dy[i]:edy[i] + 1, dx[i]:edx[i] + 1, :] = im[y[i]:ey[i] + 1, x[i]:ex[i] + 1, :]
-            crop_im = cv2.resize(tmp, (48, 48))
-            crop_im_tensor = image_tools.convert_image_to_tensor(crop_im)
-            # cropped_ims_tensors[i, :, :, :] = crop_im_tensor
-            cropped_ims_tensors.append(crop_im_tensor)
+            if(edx[i]>0) and (edy[i]>0) and (ey[i]>0)  and (ex[i]>0) and (tmph[i] > 0) and (tmpw[i] > 0):# ignore nagitive value
+               tmp = np.zeros((tmph[i], tmpw[i], 3), dtype=np.uint8)
+               tmp[dy[i]:edy[i] + 1, dx[i]:edx[i] + 1, :] = im[y[i]:ey[i] + 1, x[i]:ex[i] + 1, :]
+               crop_im = cv2.resize(tmp, (48, 48))
+               crop_im_tensor = image_tools.convert_image_to_tensor(crop_im)
+               # cropped_ims_tensors[i, :, :, :] = crop_im_tensor
+               cropped_ims_tensors.append(crop_im_tensor)
         feed_imgs = Variable(torch.stack(cropped_ims_tensors))
 
         #if self.rnet_detector.use_cuda:
         feed_imgs = feed_imgs.cuda()
-
-        cls_map, reg, landmark = self.onet_detector(feed_imgs)
+        print(feed_imgs.size())
+        cls_map, reg, landmark = self.onet_detector(feed_imgs.float())
 
         cls_map = cls_map.cpu().data.numpy()
         reg = reg.cpu().data.numpy()
@@ -562,6 +563,22 @@ face candidates:%d, current batch_size:%d"%(num_boxes, batch_size)
         bw = keep_boxes[:, 2] - keep_boxes[:, 0] + 1
         bh = keep_boxes[:, 3] - keep_boxes[:, 1] + 1
 
+        boxes = np.vstack([ keep_boxes[:,0],
+                              keep_boxes[:,1],
+                              keep_boxes[:,2],
+                              keep_boxes[:,3],
+                              keep_cls[:,0],
+                              # keep_boxes[:,0] + keep_landmark[:, 0] * bw,
+                              # keep_boxes[:,1] + keep_landmark[:, 1] * bh,
+                              # keep_boxes[:,0] + keep_landmark[:, 2] * bw,
+                              # keep_boxes[:,1] + keep_landmark[:, 3] * bh,
+                              # keep_boxes[:,0] + keep_landmark[:, 4] * bw,
+                              # keep_boxes[:,1] + keep_landmark[:, 5] * bh,
+                              # keep_boxes[:,0] + keep_landmark[:, 6] * bw,
+                              # keep_boxes[:,1] + keep_landmark[:, 7] * bh,
+                              # keep_boxes[:,0] + keep_landmark[:, 8] * bw,
+                              # keep_boxes[:,1] + keep_landmark[:, 9] * bh,
+                            ])
 
         align_topx = keep_boxes[:, 0] + keep_reg[:, 0] * bw
         align_topy = keep_boxes[:, 1] + keep_reg[:, 1] * bh
@@ -590,7 +607,7 @@ face candidates:%d, current batch_size:%d"%(num_boxes, batch_size)
                                  # align_topx + keep_landmark[:, 8] * bw,
                                  # align_topy + keep_landmark[:, 9] * bh,
                                  ])
-
+        boxes = boxes.T
         boxes_align = boxes_align.T
 
         landmark =  np.vstack([
@@ -608,7 +625,7 @@ face candidates:%d, current batch_size:%d"%(num_boxes, batch_size)
 
         landmark_align = landmark.T
 
-        return boxes_align, landmark_align
+        return boxes, boxes_align, landmark_align
 
 
     def detect_face(self,img):
@@ -627,7 +644,7 @@ face candidates:%d, current batch_size:%d"%(num_boxes, batch_size)
 
             t1 = time.time() - t
             t = time.time()
-
+        print("Finish PNet Detection !")
         # rnet
         if self.rnet_detector:
             boxes, boxes_align = self.detect_rnet(img, boxes_align)
@@ -636,18 +653,30 @@ face candidates:%d, current batch_size:%d"%(num_boxes, batch_size)
 
             t2 = time.time() - t
             t = time.time()
+            print("Finish RNet Detection !")
+            '''
+            for i in range(boxes.shape[0]):
+                bbox = boxes[i, :4]
+                print((bbox[0], bbox[1]),bbox[2],bbox[3])
+                cv2.rectangle(img,(int(bbox[0]), int(bbox[1])),
+                             (int(bbox[2]),# - bbox[0],
+                              int(bbox[3])),(0, 255, 0), 2)# - bbox[1]
 
+        
+            cv2.imwrite('rnet_faces.png', img)
+            '''
         # onet
         if self.onet_detector:
-            boxes_align, landmark_align = self.detect_onet(img, boxes_align)
+            print("In Onet dedection Fun...")
+            boxes, boxes_align, landmark_align = self.detect_onet(img, boxes_align)
             if boxes_align is None:
                 return np.array([]), np.array([])
 
             t3 = time.time() - t
             t = time.time()
             print("time cost " + '{:.3f}'.format(t1+t2+t3) + '  pnet {:.3f}  rnet {:.3f}  onet {:.3f}'.format(t1, t2, t3))
-
-        return boxes_align, landmark_align
+         
+        return boxes, landmark_align
 
 
 
