@@ -15,7 +15,7 @@ import dface.core.vision as vision
 
 def gen_onet_data(data_dir, anno_file, pnet_model_file, rnet_model_file, prefix_path='', use_cuda=True, vis=False):
 
-
+    '''
     pnet, rnet, _ = create_mtcnn_net(p_model_path=pnet_model_file, r_model_path=rnet_model_file, use_cuda=use_cuda)
     mtcnn_detector = MtcnnDetector(pnet=pnet, rnet=rnet, min_face_size=12)
 
@@ -59,7 +59,8 @@ def gen_onet_data(data_dir, anno_file, pnet_model_file, rnet_model_file, prefix_
     with open(save_file, 'wb') as f:
         #cPickle.dump(all_boxes, f, cPickle.HIGHEST_PROTOCOL)
         pk.dump(all_boxes, f, pk.HIGHEST_PROTOCOL)
-
+    '''
+    save_file = "/workspace/mtcnn/DFace/model_store/detections_1532105636.pkl"
     gen_onet_sample_data(data_dir,anno_file,save_file,prefix_path)
 
 
@@ -93,7 +94,8 @@ def gen_onet_sample_data(data_dir,anno_file,det_boxs_file,prefix):
         im_idx = os.path.join(prefix,annotation[0])
 
         boxes = map(float, annotation[1:])
-        boxes = np.array(boxes, dtype=np.float32).reshape(-1, 4)
+        boxes = np.fromiter(boxes, dtype=np.float32).reshape(-1,4)
+        #boxes = np.array(boxes, dtype=np.float32).reshape(-1, 4)# python2 : float() argument must be a string or a number, not 'map'
         im_idx_list.append(im_idx)
         gt_boxes_list.append(boxes)
 

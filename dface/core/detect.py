@@ -398,11 +398,11 @@ face candidates:%d, current batch_size:%d"%(num_boxes, batch_size)
 
         # cropped_ims_tensors = np.zeros((num_boxes, 3, 24, 24), dtype=np.float32)
         cropped_ims_tensors = []
-        print(num_boxes)
+        #print(num_boxes)
         for i in range(num_boxes):
             if(edx[i]>0) and (edy[i]>0) and (ey[i]>0)  and (ex[i]>0) and (tmph[i] > 0) and (tmpw[i] > 0):# ignore nagitive value
                tmp = np.zeros((tmph[i], tmpw[i], 3), dtype=np.uint8)
-               print(dy[i],edy[i]+1, dx[i],edx[i]+1)
+               #print(dy[i],edy[i]+1, dx[i],edx[i]+1)
                tmp[dy[i]:edy[i]+1, dx[i]:edx[i]+1, :] = im[y[i]:ey[i]+1, x[i]:ex[i]+1, :]
                crop_im = cv2.resize(tmp, (24, 24))
                crop_im_tensor = image_tools.convert_image_to_tensor(crop_im)

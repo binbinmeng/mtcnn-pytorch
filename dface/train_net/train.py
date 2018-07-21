@@ -250,14 +250,14 @@ def train_onet(model_store_path, end_epoch,imdb,
                 gt_bbox = gt_bbox.cuda()
                 gt_landmark = gt_landmark.cuda()
 
-            cls_pred, box_offset_pred, landmark_offset_pred = net(im_tensor)
+            cls_pred, box_offset_pred, landmark_offset_pred = net(im_tensor.float())
             # all_loss, cls_loss, offset_loss = lossfn.loss(gt_label=label_y,gt_offset=bbox_y, pred_label=cls_pred, pred_offset=box_offset_pred)
 
             cls_loss = lossfn.cls_loss(gt_label,cls_pred)
             box_offset_loss = lossfn.box_loss(gt_label,gt_bbox,box_offset_pred)
-            landmark_loss = lossfn.landmark_loss(gt_label,gt_landmark,landmark_offset_pred)
+            #landmark_loss = lossfn.landmark_loss(gt_label,gt_landmark,landmark_offset_pred)
 
-            all_loss = cls_loss*0.8+box_offset_loss*0.6+landmark_loss*1.5
+            all_loss = cls_loss*0.8+box_offset_loss*0.6#+landmark_loss*1.5
 
             if batch_idx%frequent==0:
                 accuracy=compute_accuracy(cls_pred,gt_label)
@@ -265,14 +265,14 @@ def train_onet(model_store_path, end_epoch,imdb,
                 show1 = accuracy.data[0]
                 show2 = cls_loss.data[0]
                 show3 = box_offset_loss.data[0]
-                show4 = landmark_loss.data[0]
+                #show4 = landmark_loss.data[0]
                 show5 = all_loss.data[0]
 
-                print("%s : Epoch: %d, Step: %d, accuracy: %s, det loss: %s, bbox loss: %s, landmark loss: %s, all_loss: %s, lr:%s "%(datetime.datetime.now(),cur_epoch,batch_idx, show1,show2,show3,show4,show5,base_lr))
+                print("%s : Epoch: %d, Step: %d, accuracy: %s, det loss: %s, bbox loss: %s,  all_loss: %s, lr:%s "%(datetime.datetime.now(),cur_epoch,batch_idx, show1,show2,show3,show5,base_lr))
                 accuracy_list.append(accuracy)
                 cls_loss_list.append(cls_loss)
                 bbox_loss_list.append(box_offset_loss)
-                landmark_loss_list.append(landmark_loss)
+                #landmark_loss_list.append(landmark_loss)
 
             optimizer.zero_grad()
             all_loss.backward()

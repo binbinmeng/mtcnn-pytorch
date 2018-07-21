@@ -180,7 +180,9 @@ class ONet(nn.Module):
             nn.Conv2d(64, 64, kernel_size=3, stride=1),  # conv3
             nn.PReLU(), # prelu3
             nn.MaxPool2d(kernel_size=2,stride=2), # pool3
-            nn.Conv2d(64,128,kernel_size=2,stride=1), # conv4
+            #nn.Conv2d(64,128,kernel_size=2,stride=1), # conv4
+            nn.Conv2d(64, 64, kernel_size=(2, 2), stride=(1, 1), padding=(0, 0), groups=64),  # conv3
+            nn.Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0)),
             nn.PReLU() # prelu4
         )
         self.conv5 = nn.Linear(128*2*2, 256)  # conv5
